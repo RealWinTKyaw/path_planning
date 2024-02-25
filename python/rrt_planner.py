@@ -72,8 +72,9 @@ class RRTPlanner:
         """
         #TODO: make sure you're not exceeding the row and columns bounds
         # x must be in {0, cols-1} and y must be in {0, rows -1}
-        x = 0
-        y = 0
+        rows, cols = self.world.shape[:2]
+        x = random.randint(0, cols - 1)
+        y = random.randint(0, rows - 1)
         return State(x, y, None)
 
 
@@ -122,8 +123,18 @@ class RRTPlanner:
         #TODO: populate x and y properly according to the description above.
         #Note: x and y are integers and they should be in {0, ..., cols -1}
         # and {0, ..., rows -1} respectively
-        x = 0
-        y = 0
+
+        dist_to_rand = s_nearest.euclidean_distance(s_rand)
+
+        if dist_to_rand < max_radius:
+            x, y = s_rand.x, s_rand.y
+        else:
+            ratio = max_radius / dist_to_rand
+            x = s_nearest.x + int((s_rand.x - s_nearest.x) * ratio)
+            y = s_nearest.y + int((s_rand.y - s_nearest.y) * ratio)
+
+        x = max(0, min(x, self.world.shape[1] - 1))
+        y = max(0, min(y, self.world.shape[0] - 1))
 
         s_new = State(x, y, s_nearest)
         return s_new
@@ -143,7 +154,13 @@ class RRTPlanner:
         for i in range(max_checks):
             # TODO: check if the inteprolated state that is float(i)/max_checks * dist(s_from, s_new)
             # away on the line from s_from to s_new is free or not. If not free return False
-            return False
+
+            ratio = i / max_checks
+            x = int(s_from.x + (s_to.x - s_from.x) * ratio)
+            y = int(s_from.y + (s_to.y - s_from.y) * ratio)
+
+            if not self.state_is_free(State(x, y, None)):
+                return False
 
         # Otherwise the line is free, so return true
         return True
@@ -171,8 +188,10 @@ class RRTPlanner:
 
             # TODO: Use the methods of this class as in the slides to
             # compute s_new
-            s_nearest = None
-            s_new = None
+            
+            s_rand = self.sample_state()
+            s_nearest = self.find_closest_state(tree_nodes, s_rand)
+            s_new = self.steer_towards(s_nearest, s_rand, max_steering_radius)
 
             if self.path_is_obstacle_free(s_nearest, s_new):
                 tree_nodes.add(s_new)

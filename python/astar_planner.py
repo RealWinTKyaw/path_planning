@@ -167,6 +167,10 @@ class AStarPlanner:
                 transition_distance = sqrt((ns.x - s.x)**2 + (ns.y - s.y)**2)
                 alternative_dist_to_come_to_ns = dist_to_come[s.x, s.y] + transition_distance
 
+                ### A* planner modification ###
+                heuristic = sqrt((ns.x - dest_state.x)**2 + (ns.y - dest_state.y)**2)
+                alternative_dist_to_come_to_ns += heuristic
+
                 # if the state ns has not been visited before or we just found a shorter path
                 # to visit it then update its priority in the queue, and also its
                 # distance to come and its parent
